@@ -1,4 +1,8 @@
 using CleanArchitecture.Infrastructure.Persistence;
+using CleanArchitecture.WebUI.Commons;
+using FastEndpoints;
+using FastEndpoints.ClientGen;
+using FastEndpoints.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +16,6 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
 
     // Initialise and seed database
@@ -33,24 +36,24 @@ app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseSwaggerUi3(settings =>
-{
-    settings.Path = "/api";
-    settings.DocumentPath = "/api/specification.json";
-});
-
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseIdentityServer();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller}/{action=Index}/{id?}");
+app.UseFastEndpoints(cfg => 
+{
+    cfg.Endpoints.ShortNames = true;
+    cfg.Endpoints.RoutePrefix = "api";
+
+});
+app.UseSwaggerGen();
 
 app.MapRazorPages();
 
 app.MapFallbackToFile("index.html");
+
+await app.GenerateClientsAndExitAsync();
 
 app.Run();
